@@ -1,18 +1,19 @@
-//lolin esp32 board code
+//devboard code
 #include <esp_now.h>
 #include <WiFi.h>
 
 //MAC adress of the receiver
-uint8_t broadcastAddress[] = {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58};
+uint8_t broadcastAddress[] = {0xF0, 0x08, 0xD1, 0xCC, 0xE8, 0x4C};
 //variable will store a success message if payload was delivered to the recepient
 String success_msg;
 
+
+
 //payload to be sent
 typedef struct struct_message {
-  char a[32];
-  int b;
-  float c;
-  bool d;
+  String names[1] = {
+    "Nico Vitz",
+  };
 } struct_message;
 // Create a struct_message to be sent to peers
 struct_message myData;
@@ -37,14 +38,10 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *receivedData, int len) {
   Serial.print("Data received!");
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.print("Char: ");
-  Serial.println(incomingData.a);
-  Serial.print("Int: ");
-  Serial.println(incomingData.b);
-  Serial.print("Float: ");
-  Serial.println(incomingData.c);
-  Serial.print("Bool: ");
-  Serial.println(incomingData.d);
+  Serial.print("names from other badge: ");
+  for (int i = 0; i < 1; i++) {
+    Serial.println(incomingData.names[i]);
+  }
   Serial.println();
 }
 
@@ -79,14 +76,9 @@ void setup() {
 }
 
 void loop() {
-  // Set values to send
-  strcpy(myData.a, "THIS IS A CHAR");
-  myData.b = random(1, 20);
-  myData.c = 1.2;
-  myData.d = false;
-  Serial.println("ready to send dat to peers!");
+  Serial.println("ready to send data to peers!");
   //send message via ESP-NOW
-  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, 1);
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
   if (result == ESP_OK) {
     Serial.println("Sent with success");
   }
@@ -94,18 +86,4 @@ void loop() {
     Serial.println("Error sending the data");
   }
   delay(2000);
-  /*
-    // Send message via ESP-NOW
-    esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) badgeid,7);
-    if (result == ESP_OK) {
-    Serial.println("Sent with success");
-    }
-    else {
-    Serial.println("Error sending the data");
-    }
-
-    //display received payload
-    Serial.print("Incoming: ");
-    Serial.println(incoming);
-    delay(2000);*/
 }
