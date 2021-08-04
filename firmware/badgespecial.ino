@@ -14,7 +14,8 @@ uint8_t broadcastAddresses[4][6] = {
   {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58},
   {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xFF},
   {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xCF},
-  {0x4A, 0x7E, 0xA2, 0x2F, 0x1C, 0x58}};
+  {0x4A, 0x7E, 0xA2, 0x2F, 0x1C, 0x58}
+};
 
 //variable will store a success message if payload was delivered to the recepient
 String success_msg;
@@ -51,7 +52,11 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
+#ifdef ESP32
 
+#else
+  esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+#endif
   // Once ESPNow is successfully Init, we will register for Send CB to
   // get the status of Trasnmitted packet
   esp_now_register_send_cb(OnDataSent);
@@ -74,10 +79,10 @@ void loop() {
   //assign two special names to be transmitted by this special board
   myData.name1 = "Winston Smith";
   myData.name2 = "Ronald Greene";
-  
+
   //display a random name from the liston the e-ink
-  int index = random(0,297);
-  
+  int index = random(0, 297);
+
   //display the list of names on the serial monitor
   Serial.println("------------------------------------");
   Serial.println("          Never forgotten           ");

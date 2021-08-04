@@ -2,11 +2,12 @@
 //has 10 names scrolling on the screen
 #include <esp_now.h>
 #ifdef ESP32
-  #include <WiFi.h>
+#include <WiFi.h>
 #else
-  #include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 #endif
 #include "names.h"
+
 
 //payload to be received from a special board
 typedef struct struct_message {
@@ -16,6 +17,8 @@ typedef struct struct_message {
 //struct_messsage to hold incoming data
 struct_message incomingData;
 
+long lastSendTime = 0;        // last send time
+int interval = 10000;          // interval between name prints
 
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *receivedData, int len) {
@@ -41,9 +44,25 @@ void setup() {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
+#ifdef ESP32
+
+#else
+  esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+#endif
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
 }
 
 void loop() {
+  if (millis() - lastSendTime > interval) {
+
+    //display the list of names on the serial monitor
+    Serial.println("------------------------------------");
+    Serial.println("          Never forgotten           ");
+    Serial.println("------------------------------------");
+    for (int i = 0; i < 297; i++) {
+      Serial.println(names_to_be_displayed[i]);
+    }
+    lastSendTime = millis();
+  }
 }
