@@ -8,7 +8,7 @@
 #endif
 #include "names.h"
 
-//The mark adresses of the receivers -> strore them in a 2d array
+//The mac adresses of the receivers -> strore them in a 2d array
 //to make registering peers easier
 uint8_t broadcastAddresses[4][6] = {
   {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58},
