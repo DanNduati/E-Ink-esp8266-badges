@@ -11,8 +11,8 @@
 
 //payload to be received from a special board
 typedef struct struct_message {
-  char *name1;
-  char *name2;
+  char name1[40];
+  char name2[40];
 } struct_message;
 //struct_messsage to hold incoming data
 struct_message incomingData;
@@ -23,7 +23,7 @@ int interval = 10000;          // interval between name prints
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *receivedData, int len) {
   memcpy(&incomingData, receivedData, sizeof(incomingData));
-  Serial.print("Data received!");
+  Serial.print("Obtained names from special badge!");
   Serial.print("Bytes received: ");
   Serial.println(len);
   Serial.println("names from the special badge");

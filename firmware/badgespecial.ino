@@ -8,7 +8,7 @@
 #endif
 #include "names.h"
 
-//The mac adresses of the receivers -> strore them in a 2d array
+//The mark adresses of the receivers -> strore them in a 2d array
 //to make registering peers easier
 uint8_t broadcastAddresses[4][6] = {
   {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58},
@@ -23,8 +23,8 @@ String success_msg;
 //payload to be sent
 typedef struct struct_message {
   //two special names that will be transmitted by this special board
-  char *name1;
-  char *name2;
+  char name1[40];
+  char name2[40];
 } struct_message;
 
 // Create a struct_message to be sent to normal boards
@@ -77,9 +77,10 @@ void setup() {
 
 void loop() {
   //assign two special names to be transmitted by this special board
-  myData.name1 = "Winston Smith";
-  myData.name2 = "Ronald Greene";
-
+  String name1 = "Winston Smith";
+  String name2 = "Ronald Greene";
+  name1.toCharArray(myData.name1, 40); 
+  name2.toCharArray(myData.name2, 40); 
   //display a random name from the liston the e-ink
   int index = random(0, 297);
 
