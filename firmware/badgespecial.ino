@@ -10,17 +10,20 @@
 
 //The mark adresses of the receivers -> strore them in a 2d array
 //to make registering peers easier
-uint8_t broadcastAddress[] = {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58};
-//uint8_t broadcastAddress2[] = {0xFF, , , , , };
-//uint8_t broadcastAddress3[] = {0xFF, , , , , };
+uint8_t broadcastAddresses[4][6] = {
+  {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58},
+  {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xFF},
+  {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xCF},
+  {0x4A, 0x7E, 0xA2, 0x2F, 0x1C, 0x58}};
 
 //variable will store a success message if payload was delivered to the recepient
 String success_msg;
 
 //payload to be sent
 typedef struct struct_message {
-  String name1 = "Winston Smith" ;
-  String name2 = "Ronald Greene";
+  //two special names that will be transmitted by this special board
+  char *name1;
+  char *name2;
 } struct_message;
 
 // Create a struct_message to be sent to normal boards
@@ -34,7 +37,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print(macStr);
-  Serial.print(" send status:\t");
+  Serial.print(" send status normal board address: ");
   Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
@@ -55,34 +58,35 @@ void setup() {
 
   // Register peers
   esp_now_peer_info_t peerInfo;
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
-
-  // Add the first peer
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
-    return;
-  }
-  //register second peer
-  /*
-    memcpy(peerInfo.peer_addr, broadcastAddress2, 6);
-    if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
-    return;
+  //dynamically add all peers in the broadcast array
+  for (int i = 0; i < 4; i++) {
+    memcpy(peerInfo.peer_addr, broadcastAddresses[i], 6);
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+      Serial.println("Failed to add normal board");
+      return;
     }
-  */
+  }
 }
 
 void loop() {
-  //display a random name from the liston the e-ink 
-
+  //assign two special names to be transmitted by this special board
+  myData.name1 = "Winston Smith";
+  myData.name2 = "Ronald Greene";
+  
+  //display a random name from the liston the e-ink
+  int index = random(0,297);
+  
   //display the list of names on the serial monitor
-  for(int i=0; i<297; i++){
-    Serial.println(names_to_be_displayed[i]); 
+  Serial.println("------------------------------------");
+  Serial.println("          Never forgotten           ");
+  Serial.println("------------------------------------");
+  for (int i = 0; i < 297; i++) {
+    Serial.println(names_to_be_displayed[i]);
   }
-  Serial.println("ready to send data to peers!");
+  Serial.println("ready to send data to the normal boards!");
   //send message via ESP-NOW
   esp_err_t result = esp_now_send(0, (uint8_t *)&myData, sizeof(myData));
-  delay(2000);
+  delay(5000);
 }
