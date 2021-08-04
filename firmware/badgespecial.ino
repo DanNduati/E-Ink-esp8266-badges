@@ -25,12 +25,14 @@ String success_msg;
 //payload to be sent
 typedef struct struct_message {
   //two special names that will be transmitted by this special board
-  char name1[40];
-  char name2[40];
+  char special_name[40];
 } struct_message;
 
 // Create a struct_message to be sent to normal boards
 struct_message myData;
+
+long lastSendTime = 0;        // last send time
+int interval = 2000;          // interval between serial print and data sends
 
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -50,7 +52,7 @@ void setup() {
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
   // Init ESP-NOW
-  if (esp_now_init() != ESP_OK) {
+  if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
@@ -78,23 +80,23 @@ void setup() {
 }
 
 void loop() {
-  //assign two special names to be transmitted by this special board
-  String name1 = "Winston Smith";
-  String name2 = "Ronald Greene";
-  name1.toCharArray(myData.name1, 40); 
-  name2.toCharArray(myData.name2, 40); 
-  //display a random name from the liston the e-ink
-  int index = random(0, 297);
+  if (millis() - lastSendTime > interval) {
+    //assign two special names to be transmitted by this special board
+    String sname = "BIC_FOUNDED_2018";
+    sname.toCharArray(myData.special_name, 40);
+    //display a random name from the liston the e-ink
+    int index = random(0, 297);
 
-  //display the list of names on the serial monitor
-  Serial.println("------------------------------------");
-  Serial.println("          Never forgotten           ");
-  Serial.println("------------------------------------");
-  for (int i = 0; i < 297; i++) {
-    Serial.println(names_to_be_displayed[i]);
+    //display the list of names on the serial monitor
+    Serial.println("------------------------------------");
+    Serial.println("          Never forgotten           ");
+    Serial.println("------------------------------------");
+    for (int i = 0; i < 297; i++) {
+      Serial.println(names_to_be_displayed[i]);
+    }
+    Serial.println("ready to send data to the normal boards!");
+    //send message via ESP-NOW
+    esp_err_t result = esp_now_send(0, (uint8_t *)&myData, sizeof(myData));
+    lastSendTime = millis();
   }
-  Serial.println("ready to send data to the normal boards!");
-  //send message via ESP-NOW
-  esp_err_t result = esp_now_send(0, (uint8_t *)&myData, sizeof(myData));
-  delay(5000);
 }

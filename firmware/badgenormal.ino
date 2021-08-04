@@ -12,8 +12,8 @@
 
 //payload to be received from a special board
 typedef struct struct_message {
-  char name1[40];
-  char name2[40];
+  //two special names that will be transmitted by this special board
+  char special_name[40];
 } struct_message;
 //struct_messsage to hold incoming data
 struct_message incomingData;
@@ -24,14 +24,11 @@ int interval = 10000;          // interval between name prints
 // Callback when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *receivedData, int len) {
   memcpy(&incomingData, receivedData, sizeof(incomingData));
-  Serial.print("Obtained names from special badge!");
+  Serial.println("Obtained names from special badge!");
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.println("names from the special badge");
-  Serial.print("name1: ");
-  Serial.println(incomingData.name1);
-  Serial.print("name2: ");
-  Serial.println(incomingData.name2);
+  Serial.print("Special name from the special badge: ");
+  Serial.println(incomingData.special_name);
   Serial.println();
 }
 
@@ -41,7 +38,7 @@ void setup() {
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
   // Init ESP-NOW
-  if (esp_now_init() != ESP_OK) {
+  if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
