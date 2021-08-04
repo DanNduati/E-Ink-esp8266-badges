@@ -1,14 +1,29 @@
-//This is the special board
 #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
 #include <espnow.h>
-#include "names.h"
+#include "index.h" //Our HTML webpage contents
+
+//SSID and Password of your WiFi router
+const char* ssid = "dan";
+const char* password = "dandandandan";
+
+ESP8266WebServer server(80); //Server on port 80
+
+void handleRoot() {
+ String s = MAIN_page; //Read HTML contents
+ server.send(200, "text/html", s); //Send web page
+}
+
+//The special name sent by this board
+String sname = "BIC_FOUNDED_2018";
 
 //The mark adresses of the receivers -> strore them in a 2d array
 //to make registering peers easier
 uint8_t broadcastAddresses[4][6] = {
   {0x30, 0xAE, 0xA4, 0x18, 0x1C, 0x58},
   {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xFF},
-  {0xF0, 0xFF, 0x2F, 0x4D, 0x3C, 0xCF},
+  {0x60, 0x01, 0x94, 0x24, 0xFA, 0x89},
   {0x4A, 0x7E, 0xA2, 0x2F, 0x1C, 0x58}
 };
 
@@ -47,9 +62,9 @@ void OnDataSent(uint8_t *mac_addr,  uint8_t sendStatus) {
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  // Set device as a Wi-Fi Station
-  WiFi.mode(WIFI_STA);
-  // Init ESP-NOW
+  WiFi.mode(WIFI_AP_STA);// Set the device as a Station and Soft Access Point simultaneously
+  WiFi.begin(ssid, password);     //Connect to your WiFi router
+  Serial.println("");
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
     return;
@@ -60,31 +75,32 @@ void setup() {
   // Register peers
   //dynamically add all peers in the broadcast array
   for (int i = 0; i < 4; i++) {
-    /*
-      memcpy(peerInfo.peer_addr, broadcastAddresses[i], 6);
-      if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-      Serial.println("Failed to add normal board");
-      return;
-      }*/
     esp_now_add_peer(broadcastAddresses[i], ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
   }
+   // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  //If connection successful show IP address in serial monitor
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+ 
+  server.on("/", handleRoot);      //Which routine to handle at root location
+
+  server.begin();                  //Start server
+  Serial.println("HTTP server started");
 }
 
 void loop() {
+  server.handleClient();
   if (millis() - lastSendTime > interval) {
-    //assign two special names to be transmitted by this special board
-    String sname = "BIC_FOUNDED_2018";
+    //assign  special name to be transmitted by this special board
     sname.toCharArray(myData.special_name, 40);
-    //display a random name from the liston the e-ink
-    int index = random(0, 297);
-
-    //display the list of names on the serial monitor
-    Serial.println("------------------------------------");
-    Serial.println("          Never forgotten           ");
-    Serial.println("------------------------------------");
-    for (int i = 0; i < 297; i++) {
-      Serial.println(names_to_be_displayed[i]);
-    }
     Serial.println("ready to send data to the normal boards!");
     //send message via ESP-NOW
     //esp_now_send(0, (uint8_t *)&myData, sizeof(myData));

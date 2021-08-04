@@ -1,8 +1,21 @@
-//This is the normal board
 #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
 #include <espnow.h>
-#include "names.h"
+#include "index.h" //Our HTML webpage contents
 
+
+
+//SSID and Password of your WiFi router
+const char* ssid = "dan";
+const char* password = "dandandandan";
+
+ESP8266WebServer server(80); //Server on port 80
+
+void handleRoot() {
+ String s = MAIN_page; //Read HTML contents
+ server.send(200, "text/html", s); //Send web page
+}
 
 //payload to be received from a special board
 typedef struct struct_message {
@@ -24,13 +37,16 @@ void OnDataRecv(uint8_t * mac, uint8_t *receivedData, uint8_t len) {
   Serial.print("Special name from the special badge: ");
   Serial.println(incomingData.special_name);
   Serial.println();
+  //function to check if special name is already in the special names array if not add it
+  
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  // Set device as a Wi-Fi Station
-  WiFi.mode(WIFI_STA);
+void setup(void){
+  Serial.begin(9600);
+  WiFi.mode(WIFI_AP_STA);// Set the device as a Station and Soft Access Point simultaneously
+  WiFi.begin(ssid, password);     //Connect to your WiFi router
+  Serial.println("");
+
   // Init ESP-NOW
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
@@ -39,18 +55,25 @@ void setup() {
   esp_now_set_self_role(ESP_NOW_ROLE_SLAVE);
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  //If connection successful show IP address in serial monitor
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+ 
+  server.on("/", handleRoot);      //Which routine to handle at root location
+
+  server.begin();                  //Start server
+  Serial.println("HTTP server started");
 }
 
-void loop() {
-  if (millis() - lastSendTime > interval) {
-
-    //display the list of names on the serial monitor
-    Serial.println("------------------------------------");
-    Serial.println("          Never forgotten           ");
-    Serial.println("------------------------------------");
-    for (int i = 0; i < 297; i++) {
-      Serial.println(names_to_be_displayed[i]);
-    }
-    lastSendTime = millis();
-  }
+void loop(void){
+  server.handleClient();          //Handle client requests
 }
