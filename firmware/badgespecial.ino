@@ -1,10 +1,12 @@
 //This is the special board
 //has two names from the list scrolling on the screen
-#include <esp_now.h>
+
 #ifdef ESP32
 #include <WiFi.h>
+#include <esp_now.h>
 #else
 #include <ESP8266WiFi.h>
+#include <espnow.h>
 #endif
 #include "names.h"
 
