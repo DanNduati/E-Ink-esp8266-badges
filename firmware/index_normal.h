@@ -38,30 +38,28 @@ const char MAIN_page[] PROGMEM = R"=====(
     th, td {
       padding: 15px;
     }
+    td{
+      color: #EEEEEE;
+    }
   </style>
 </head>
 <body>
-  <h1> Special Messages</h1>
+  <h1> Special Messages Obtained</h1>
   <table>
     <tr>
-      <th>Special Message</th>
-      <th>Status</th>
+      <th>Special Messages</th>
     </tr>
     <tr>
       <td>BIC_FOUNDED_2018</td>
-      <td>0</td>
     </tr>
     <tr>
       <td>7h3_f0und3r_h45_4n_3v1l_7w1n</td>
-      <td>0</td>
     </tr>
     <tr>
       <td>MK48</td>
-      <td>0</td>
     </tr>
     <tr>
       <td>y0ur_f4v0r173_4cc3550ry_1s_Socks!</td>
-      <td>0</td>
     </tr>
   </table>
   <h1> Never Forgotten </h1>

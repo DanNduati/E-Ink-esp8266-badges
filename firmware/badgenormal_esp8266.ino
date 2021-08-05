@@ -6,7 +6,7 @@
 
 
 
-//SSID and Password of your WiFi router
+//board ap config
 const char* ssid = "NormalBadge";
 const char* password = "dandandandan";
 
@@ -18,8 +18,8 @@ IPAddress subnet(255, 255, 255, 0);
 ESP8266WebServer server(80); //Server on port 80
 
 void handleRoot() {
- String s = MAIN_page; //Read HTML contents
- server.send(200, "text/html", s); //Send web page
+  String s = MAIN_page; //Read HTML contents
+  server.send(200, "text/html", s); //Send web page
 }
 
 //payload to be received from a special board
@@ -33,6 +33,38 @@ struct_message incomingData;
 long lastSendTime = 0;        // last send time
 int interval = 10000;          // interval between name prints
 
+int special_message_count = 0;
+String special_messages[4]; //array to store special messages obtained
+
+
+void add_special_name(char spec_name[40]) {
+  String special = spec_name;
+  bool match = false;
+  //check if the special name is in the array
+  for (int i = 0; i < 4; i++) {
+    if (special.equals(special_messages[i])) {
+      match = true;
+      break;
+    }
+  }
+  if (!match) {
+    //check the number of elements currently in the array
+    //this is a quick and dirty method
+    int numberOfElements = 0;
+    for (int i = 0; i < 4; i++) {
+      if (special_messages[i] != 0) {
+        numberOfElements++;
+      }
+      else {
+        break;
+      }
+    }
+    //add match
+    special_messages[numberOfElements] = special;
+  }
+  
+}
+
 // Callback when data is received
 void OnDataRecv(uint8_t * mac, uint8_t *receivedData, uint8_t len) {
   memcpy(&incomingData, receivedData, sizeof(incomingData));
@@ -43,13 +75,14 @@ void OnDataRecv(uint8_t * mac, uint8_t *receivedData, uint8_t len) {
   Serial.println(incomingData.special_name);
   Serial.println();
   //function to check if special name is already in the special names array if not add it
-  
+  add_special_name(incomingData.special_name);
 }
 
-void setup(void){
+void setup(void) {
+  Serial.begin(115200);
   WiFi.softAPConfig(local_ip, gateway, subnet);
   WiFi.softAP(ssid);
-  
+
   delay(100);
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
@@ -67,13 +100,14 @@ void setup(void){
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
   // Wait for connection
- 
+
   server.on("/", handleRoot);      //Which routine to handle at root location
 
   server.begin();                  //Start server
   Serial.println("HTTP server started");
 }
 
-void loop(void){
+void loop(void) {
   server.handleClient();          //Handle client requests
+  
 }
