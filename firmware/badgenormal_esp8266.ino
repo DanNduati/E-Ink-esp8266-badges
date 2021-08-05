@@ -1,6 +1,8 @@
 //This is the normal board
 #include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
+//#include <ESP8266WebServer.h>
+#include <Arduino_JSON.h>
+#include "ESPAsyncWebServer.h"
 #include <espnow.h>
 #include "names.h"
 #include "index_normal.h" //our webpage
@@ -14,12 +16,10 @@ IPAddress local_ip(192, 168, 1, 123);
 IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-ESP8266WebServer server(80); //Server on port 80
+AsyncWebServer server(80); //Server on port 80
+AsyncEventSource events("/events");
 
-void handleRoot() {
-  String s = MAIN_page; //Read HTML contents
-  server.send(200, "text/html", s); //Send web page
-}
+JSONVar special_msg; //json variable to store new special messages
 
 //payload to be received from a special board
 typedef struct struct_message {
@@ -36,35 +36,40 @@ int special_message_count = 0;
 String special_messages[4]; //array to store special messages obtained
 
 
-void add_special_name(char spec_name[40]){
+void add_special_name(char spec_name[40]) {
   String special = spec_name;
   bool match = false;
   //check if the special name is in the array
-  for (int i = 0; i<4; i++){
-    if (special.equals(special_messages[i])){
+  for (int i = 0; i < 4; i++) {
+    if (special.equals(special_messages[i])) {
       match = true;
       break;
     }
   }
-  if (!match){
+  if (!match) {
     //check the number of elements currently in the array
-    //this is a quick and dirty method 
+    //this is a quick and dirty method
     int numberOfElements = 0;
-    for (int i =0; i<4; i++){
-      if (special_messages[i] !=0){
+    for (int i = 0; i < 4; i++) {
+      if (special_messages[i] != 0) {
         numberOfElements++;
       }
-      else{
+      else {
         break;
       }
     }
     //add match
     special_messages[numberOfElements] = special;
+    String jname = "sm"+String(numberOfElements);
+    special_msg[jname] = incomingData.special_name;
+    String jsonString = JSON.stringify(special_msg);
+    Serial.println(jsonString);
+    events.send(jsonString.c_str(), "new_special_message", millis());
   }
   //print special names
   Serial.println("Special names obtained: ");
-  for(int i=0; i<4; i++){
-    Serial.print(i+1);
+  for (int i = 0; i < 4; i++) {
+    Serial.print(i + 1);
     Serial.print(": ");
     Serial.println(special_messages[i]);
   }
@@ -78,7 +83,10 @@ void OnDataRecv(uint8_t * mac, uint8_t *receivedData, uint8_t len) {
   Serial.print("Special name from the special badge: ");
   Serial.println(incomingData.special_name);
   Serial.println();
+
+
   //function to check if special name is already in the special names array if not add it
+  //this function also adds the special message to the json object to be passed to the webserver
   add_special_name(incomingData.special_name);
 }
 
@@ -98,23 +106,28 @@ void setup() {
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
 
-  server.on("/", handleRoot);      //Which routine to handle at root location
 
-  server.begin();                  //Start server
-  Serial.println("HTTP server started");
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send_P(200, "text/html", MAIN_page);
+  });
+
+  events.onConnect([](AsyncEventSourceClient * client) {
+    if (client->lastId()) {
+      Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+    }
+    // send event with message "hello!", id current millis
+    // and set reconnect delay to 1 second
+    client->send("hello!", NULL, millis(), 10000);
+  });
+  server.addHandler(&events);
+  server.begin();
 }
 
 void loop() {
-  server.handleClient();          //Handle client requests
-  if (millis() - lastSendTime > interval) {
-
-    //display the list of names on the serial monitor
-    Serial.println("------------------------------------");
-    Serial.println("          Never forgotten           ");
-    Serial.println("------------------------------------");
-    for (int i = 0; i < 297; i++) {
-      Serial.println(names_to_be_displayed[i]);
-    }
-    lastSendTime = millis();
+  static unsigned long lastEventTime = millis();
+  static const unsigned long EVENT_INTERVAL_MS = 5000;
+  if ((millis() - lastEventTime) > EVENT_INTERVAL_MS) {
+    events.send("ping", NULL, millis());
+    lastEventTime = millis();
   }
 }

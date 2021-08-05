@@ -1,4 +1,4 @@
-const char MAIN_page[] PROGMEM = R"=====(
+const char MAIN_page[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -38,9 +38,6 @@ const char MAIN_page[] PROGMEM = R"=====(
     th, td {
       padding: 15px;
     }
-    td{
-      color: #EEEEEE;
-    }
   </style>
 </head>
 <body>
@@ -50,16 +47,16 @@ const char MAIN_page[] PROGMEM = R"=====(
       <th>Special Messages</th>
     </tr>
     <tr>
-      <td>BIC_FOUNDED_2018</td>
+      <td><p id="sm0"></p></td>
     </tr>
     <tr>
-      <td>7h3_f0und3r_h45_4n_3v1l_7w1n</td>
+      <td><p id="sm1"></p></td>
     </tr>
     <tr>
-      <td>MK48</td>
+      <td><p id="sm2"></p></td>
     </tr>
     <tr>
-      <td>y0ur_f4v0r173_4cc3550ry_1s_Socks!</td>
+      <td><p id="sm3"></p></td>
     </tr>
   </table>
   <h1> Never Forgotten </h1>
@@ -363,6 +360,33 @@ const char MAIN_page[] PROGMEM = R"=====(
     <li>Rita Loyd</li>
     <li>Henry Dumas"
   </ul>
+  <script>
+if (!!window.EventSource) {
+ var source = new EventSource('/events');
+ 
+ source.addEventListener('open', function(e) {
+  console.log("Events Connected");
+ }, false);
+ source.addEventListener('error', function(e) {
+  if (e.target.readyState != EventSource.OPEN) {
+    console.log("Events Disconnected");
+  }
+ }, false);
+ 
+ source.addEventListener('message', function(e) {
+  console.log("message", e.data);
+ }, false);
+ 
+ source.addEventListener('new_special_message', function(e) {
+  console.log("new_special_message", e.data);
+  var obj = JSON.parse(e.data);
+  document.getElementById("sm0").innerHTML = obj.sm0;
+  document.getElementById("sm1").innerHTML = obj.sm1;
+  document.getElementById("sm2").innerHTML = obj.sm2;
+  document.getElementById("sm3").innerHTML = obj.sm3;
+ }, false);
+}
+</script>
 </body>
 </html>
-)=====";
+)rawliteral";
