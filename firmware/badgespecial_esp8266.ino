@@ -2,17 +2,22 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <espnow.h>
-#include "index.h" //Our HTML webpage contents
+#include "index_special.h" //Our HTML webpage contents
 
-//SSID and Password of your WiFi router
-const char* ssid = "dan";
-const char* password = "dandandandan";
+/* Put your SSID & Password */
+const char* ssid = "SpecialBadge";  // Enter SSID here
+const char* password = "12345678";  //Enter Password here
+
+//device IP
+IPAddress local_ip(192, 168, 1, 123);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 ESP8266WebServer server(80); //Server on port 80
 
 void handleRoot() {
- String s = MAIN_page; //Read HTML contents
- server.send(200, "text/html", s); //Send web page
+  String s = MAIN_page; //Read HTML contents
+  server.send(200, "text/html", s); //Send web page
 }
 
 //The special name sent by this board
@@ -60,11 +65,17 @@ void OnDataSent(uint8_t *mac_addr,  uint8_t sendStatus) {
 }
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
-  WiFi.mode(WIFI_AP_STA);// Set the device as a Station and Soft Access Point simultaneously
-  WiFi.begin(ssid, password);     //Connect to your WiFi router
-  Serial.println("");
+  WiFi.softAPConfig(local_ip, gateway, subnet);
+  WiFi.softAP(ssid);
+  
+  delay(100);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+
+  // Print ESP8266 Local IP Address
+  Serial.println(WiFi.localIP());
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
     return;
@@ -77,19 +88,7 @@ void setup() {
   for (int i = 0; i < 4; i++) {
     esp_now_add_peer(broadcastAddresses[i], ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
   }
-   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
 
-  //If connection successful show IP address in serial monitor
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
- 
   server.on("/", handleRoot);      //Which routine to handle at root location
 
   server.begin();                  //Start server

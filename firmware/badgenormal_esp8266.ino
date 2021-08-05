@@ -2,13 +2,18 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <espnow.h>
-#include "index.h" //Our HTML webpage contents
+#include "index_normal.h" //Our HTML webpage contents
 
 
 
 //SSID and Password of your WiFi router
-const char* ssid = "dan";
+const char* ssid = "NormalBadge";
 const char* password = "dandandandan";
+
+//device IP
+IPAddress local_ip(192, 168, 1, 123);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 ESP8266WebServer server(80); //Server on port 80
 
@@ -42,10 +47,16 @@ void OnDataRecv(uint8_t * mac, uint8_t *receivedData, uint8_t len) {
 }
 
 void setup(void){
-  Serial.begin(9600);
-  WiFi.mode(WIFI_AP_STA);// Set the device as a Station and Soft Access Point simultaneously
-  WiFi.begin(ssid, password);     //Connect to your WiFi router
-  Serial.println("");
+  WiFi.softAPConfig(local_ip, gateway, subnet);
+  WiFi.softAP(ssid);
+  
+  delay(100);
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+
+  // Print ESP8266 Local IP Address
+  Serial.println(WiFi.localIP());
 
   // Init ESP-NOW
   if (esp_now_init() != 0) {
@@ -56,17 +67,6 @@ void setup(void){
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  //If connection successful show IP address in serial monitor
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
  
   server.on("/", handleRoot);      //Which routine to handle at root location
 
