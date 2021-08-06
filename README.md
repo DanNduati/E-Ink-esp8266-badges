@@ -32,4 +32,4 @@ Heres a short demo of the normal badge webserver updating the special names tabl
 ![Async webserver demo](images/async.gif)
 
 The special badges run a legacy web server that only displays a list of victims at the hands of police in the US
-<img src="images/special_webserver.png"></img>
+<img src="images/special2.png"></img>
